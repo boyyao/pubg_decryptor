@@ -2,6 +2,7 @@
 
 3.7.26.8
 
+```c
 struct tsl tsl;
 
 if (!tsl_init(&tsl)) {
@@ -24,3 +25,4 @@ uint32_t actor_count = READ32(actor + 0x8);
 uint64_t local_player_actor = tsl_decrypt_prop(&tsl, player_controller + 0x470);
 
 tsl_finit(&tsl);
+```
