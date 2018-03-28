@@ -76,7 +76,7 @@ static uint64_t ror8(uint64_t x, unsigned int count) {
 // template<typename T> read(uint64_t addr)
 #define READ32(addr) mem->read<uint32_t>(addr)
 #define READ64(addr) mem->read<uint64_t>(addr)
-// extern uint64_t g_base_addr
+
 #define GET_ADDR(addr) (g_base_addr + addr)
 
 // credit: https://www.unknowncheats.me/forum/members/2235736.html
