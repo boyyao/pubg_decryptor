@@ -1,6 +1,6 @@
 # pubg_decryptor
 
-3.7.26.8
+3.7.26.13
 
 ```c
 struct tsl tsl;
@@ -9,7 +9,7 @@ if (!tsl_init(&tsl)) {
   // what?
 }
 
-uint64_t uworld = tsl_decrypt_world(&tsl, g_base_addr + 0x41b0730);
+uint64_t uworld = tsl_decrypt_world(&tsl, g_base_addr + 0x41af780);
 uint64_t level = tsl_decrypt_prop(&tsl, uworld + 0x30);
 uint64_t game_inst = READ64(uworld + 0x148);
 uint64_t local_player = tsl_decrypt_prop(&tsl, READ64(game_inst + 0x38));
@@ -23,6 +23,8 @@ uint64_t actor_list = READ64(actor);
 uint32_t actor_count = READ32(actor + 0x8);
 
 uint64_t local_player_actor = tsl_decrypt_prop(&tsl, player_controller + 0x470);
+
+uint64_t gnames = READ64(g_base_addr + 0x3f488f8);
 
 tsl_finit(&tsl);
 ```
