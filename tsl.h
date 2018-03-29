@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-<precomp.h>
+precomp.h:
 
 #pragma once
 
@@ -19,7 +19,10 @@
 typedef uint64_t(*decrypt_func)(uint64_t);
 
 struct tsl {
-	decrypt_func func;
+	union {
+		decrypt_func func;
+		uint8_t *arr;
+	};
 };
 
 int tsl_init(struct tsl *tsl);
