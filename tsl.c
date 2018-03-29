@@ -19,13 +19,16 @@ void tsl_finit(struct tsl *tsl) {
 
 #define BYTEn(x, n) (*((BYTE *)&(x) + n))
 #define WORDn(x, n) (*((WORD *)&(x) + n))
+#define DWORDn(x, n) (*((DWORD *)&(x) + n))
 
 #define IDA_LOBYTE(x) BYTEn(x, 0)
 #define IDA_LOWORD(x) WORDn(x, 0)
+#define IDA_LODWORD(x) WORDn(x, 0)
 
-#define WORD1(x) WORDn(x, 1)
 #define BYTE1(x) BYTEn(x, 1)
 #define BYTE2(x) BYTEn(x, 2)
+#define WORD1(x) WORDn(x, 1)
+#define DWORD1(x) DWORDn(x, 1)
 
 // rotate
 
@@ -71,7 +74,7 @@ static uint64_t ror8(uint64_t x, unsigned int count) {
 
 // macro for uc!
 
-// bool read_size(uint64_t src, void *dest, size_t size) {...}
+// bool read_size(uint64_t src, void *dest, size_t size)
 #define READ(src, dest, size) mem->read_size(src, dest, size)
 // template<typename T> read(uint64_t addr)
 #define READ32(addr) mem->read<uint32_t>(addr)
@@ -82,7 +85,7 @@ static uint64_t ror8(uint64_t x, unsigned int count) {
 // credit: https://www.unknowncheats.me/forum/members/2235736.html
 
 static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t end) {
-	uint8_t buf[0x80];
+	uint8_t buf[0x100];
 	if (READ(func, buf, sizeof(buf))) {
 		uint32_t len = 0;
 		for (; len < sizeof(buf); len++) {
@@ -103,7 +106,7 @@ static int make_decrypt_func(struct tsl *tsl, uint64_t func) {
 	if (!READ(func + 14 + delta, (char *)tsl->func + 9, len)) {
 		return 0;
 	}
-	if (!READ(func + 14, (char *)tsl->func + 9 + len, 0x46)) {
+	if (!READ(func + 14, (char *)tsl->func + 9 + len, 0x100)) {
 		return 0;
 	}
 	return 1;
