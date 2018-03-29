@@ -1,7 +1,7 @@
 #include "tsl.h"
 
 int tsl_init(struct tsl *tsl) {
-	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x800, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x600, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (tsl->func == NULL) {
 		return 0;
 	}
@@ -87,10 +87,12 @@ static uint64_t ror8(uint64_t x, unsigned int count) {
 static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t end) {
 	uint8_t buf[0x100];
 	if (READ(func, buf, sizeof(buf))) {
-		uint32_t len = 0;
-		for (; len < sizeof(buf); len++) {
-			if (buf[len] == end) {
-				return len;
+		if (buf[0] == 0x48) {
+			uint32_t len = 0;
+			for (; len < sizeof(buf); len++) {
+				if (buf[len] == end) {
+					return len;
+				}
 			}
 		}
 	}
@@ -101,12 +103,18 @@ static int make_decrypt_func(struct tsl *tsl, uint64_t func) {
 	if (!READ(func, tsl->func, 9)) {
 		return 0;
 	}
-	uint32_t delta = READ32(func + 10);
-	uint32_t len = get_func_len(tsl, func + 14 + delta, 0xc3);
-	if (!READ(func + 14 + delta, (char *)tsl->func + 9, len)) {
+	if (tsl->arr[0] != 0x40) {
 		return 0;
 	}
-	if (!READ(func + 14, (char *)tsl->func + 9 + len, 0x100)) {
+	uint64_t x = (func + 14) + READ32(func + 10);
+	uint32_t len = get_func_len(tsl, x, 0xc3);
+	if (!len) {
+		return 0;
+	}
+	if (!READ(x, (char *)tsl->func + 9, len)) {
+		return 0;
+	}
+	if (!READ(func + 14, (char *)tsl->func + 9 + len, 0x80)) {
 		return 0;
 	}
 	return 1;
@@ -123,11 +131,13 @@ struct uint128_t {
 
 uint64_t tsl_decrypt_world(struct tsl *tsl, uint64_t world) {
 	struct uint128_t xmm;
-	READ(world, &xmm, 16);
+	if (!READ(world, &xmm, 16)) {
+		return 0;
+	}
 	uint32_t index = (uint32_t)xmm.low;
 	uint16_t x;
-	uint32_t y; // uint16_t
-	uint32_t z; // uint16_t
+	uint32_t y;
+	uint32_t z;
 	uint16_t w;
 	x = ror2(index + 93, -93);
 	y = index >> 16;
@@ -143,13 +153,15 @@ uint64_t tsl_decrypt_world(struct tsl *tsl, uint64_t world) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(~(~xmm.high - index));
-	memset(tsl->func, 0, 0x800);
+	memset(tsl->func, 0, 0x600);
 	return ror8(ret, -121);
 }
 
 uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 	struct uint128_t xmm;
-	READ(actor, &xmm, 16);
+	if (!READ(actor, &xmm, 16)) {
+		return 0;
+	}
 	uint32_t index = (uint32_t)xmm.low;
 	uint16_t x;
 	uint64_t y;
@@ -165,13 +177,15 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(y);
-	memset(tsl->func, 0, 0x800);
+	memset(tsl->func, 0, 0x600);
 	return ror8(ret, 70);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 	struct uint128_t xmm;
-	READ(prop, &xmm, 16);
+	if (!READ(prop, &xmm, 16)) {
+		return 0;
+	}
 	uint32_t index = (uint32_t)xmm.low;
 	uint16_t x = (uint16_t)(index + 23) ^ ((WORD1(index) ^ 0xFF9B) + 32135);
 	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((((index + 23) ^ ((BYTE2(index) ^ 0x9B) - 121)) + 79) ^ ((BYTE1(x) - 63) + 50)) % 128));
@@ -179,6 +193,6 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(ror8(xmm.high, index & 7) - index);
-	memset(tsl->func, 0, 0x800);
+	memset(tsl->func, 0, 0x600);
 	return ror8(ret, 107);
 }
