@@ -163,16 +163,15 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint32_t index = (uint32_t)xmm.low;
-	uint16_t x;
+	uint16_t x = rol2(index + 94, 94) ^ (ror2(WORD1(index), -90) + 2622);
 	uint64_t y;
-	x = rol2(index + 94, 94) ^ (ror2(WORD1(index), -90) + 2622);
 	if (index & 2) {
 		y = xmm.high ^ index;
 	}
 	else {
 		y = xmm.high + index;
 	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((~(~BYTE1(x) + 46) + 4) ^ rol1((rol2(index + 94, 94) ^ (ror2(WORD1(index), -90) + 62)) + 78, 78)) % 128));
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * ((((uint8_t)~(~BYTE1(x) + 46) + 4) ^ rol1((rol2(index + 94, 94) ^ (ror2(WORD1(index), -90) + 62)) + 78, 78)) % 128));
 	if (!make_decrypt_func(tsl, func)) {
 		return 0;
 	}
