@@ -14,15 +14,12 @@ precomp.h:
 #include <stdlib.h>
 #include <string.h>
 */
-#include "precomp.h"
+#include "dummy.h"
 
 typedef uint64_t(*decrypt_func)(uint64_t);
 
 struct tsl {
-	union {
-		decrypt_func func;
-		uint8_t *arr;
-	};
+	decrypt_func func;
 };
 
 int tsl_init(struct tsl *tsl);
