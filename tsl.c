@@ -1,7 +1,7 @@
 #include "tsl.h"
 
 int tsl_init(struct tsl *tsl) {
-	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x600, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x400, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	if (tsl->func == NULL) {
 		return 0;
 	}
@@ -75,25 +75,25 @@ static uint64_t ror8(uint64_t x, unsigned int count) {
 	return (x << (64 - count)) | (x >> count);
 }
 
-// macro for uc!
+// adapt me!
 
 // bool read_size(uint64_t src, void *dest, size_t size)
 #define READ(src, dest, size) mem->read_size(src, dest, size)
-// template<typename T> read(uint64_t addr)
+// template<typename T> T read(uint64_t addr)
 #define READ32(addr) mem->read<uint32_t>(addr)
 #define READ64(addr) mem->read<uint64_t>(addr)
 
 #define GET_ADDR(addr) (g_base_addr + addr)
 
-// credit: https://www.unknowncheats.me/forum/members/2235736.html
+// credit: DirtyFrank
 
-static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t end) {
-	uint8_t buf[0x100];
+static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t start, uint32_t end) {
+	uint8_t buf[0x80];
 	if (READ(func, buf, sizeof(buf))) {
-		if (buf[0] == 0x48) {
+		if (buf[0] == start) {
 			uint32_t len = 0;
-			for (; len < sizeof(buf); len++) {
-				if (buf[len] == end) {
+			for (; len < (sizeof(buf) - sizeof(end)); len++) {
+				if (*(uint32_t *)(buf + len) == end) {
 					return len;
 				}
 			}
@@ -103,21 +103,14 @@ static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t end) {
 }
 
 static int make_decrypt_func(struct tsl *tsl, uint64_t func) {
-	if (!READ(func, tsl->func, 9)) {
-		return 0;
-	}
-	if (tsl->arr[0] != 0x40) {
-		return 0;
-	}
 	uint64_t x = (func + 14) + READ32(func + 10);
-	uint32_t len = get_func_len(tsl, x, 0xc3);
-	if (!len) {
+	uint32_t len = get_func_len(tsl, x, 0x48, 0xccccccc3);
+	if (!len || len > 0xf) {
 		return 0;
 	}
-	if (!READ(x, (char *)tsl->func + 9, len)) {
-		return 0;
-	}
-	if (!READ(func + 14, (char *)tsl->func + 9 + len, 0x80)) {
+	if (!READ(func, tsl->func, 9) ||
+		!READ(x, (char *)tsl->func + 9, len) ||
+		!READ(func + 14, (char *)tsl->func + 9 + len, 0x50)) {
 		return 0;
 	}
 	return 1;
@@ -170,7 +163,7 @@ uint64_t tsl_decrypt_world(struct tsl *tsl, uint64_t world) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(~e);
-	memset(tsl->func, 0, 0x600);
+	memset(tsl->func, 0, 0x400);
 	return ror8(ret, 19);
 }
 
@@ -186,7 +179,7 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(index + rol8(index + xmm.high, index & 7));
-	memset(tsl->func, 0, 0x600);
+	memset(tsl->func, 0, 0x400);
 	return ror8(ret, -46);
 }
 
@@ -225,6 +218,6 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(~(~xmm.high - index));
-	memset(tsl->func, 0, 0x600);
+	memset(tsl->func, 0, 0x400);
 	return ror8(ret, -9);
 }
