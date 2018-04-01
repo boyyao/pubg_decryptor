@@ -14,7 +14,7 @@ precomp.h:
 #include <stdlib.h>
 #include <string.h>
 */
-#include "dummy.h"
+#include "precomp.h"
 
 typedef uint64_t(*decrypt_func)(uint64_t);
 
