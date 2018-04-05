@@ -1,6 +1,6 @@
 # pubg_decryptor
 
-3.7.27.14
+3.7.27.18
 
 ```c
 struct tsl tsl;
