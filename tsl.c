@@ -133,35 +133,30 @@ uint64_t tsl_decrypt_world(struct tsl *tsl, uint64_t world) {
 	uint32_t key = (uint32_t)xmm.low;
 	uint32_t x;
 	uint32_t y;
-	uint32_t z;
-	uint32_t w;
-	if (key & 4) {
-		x = ~(~(uint16_t)key + 213);
+	uint8_t z;
+	uint16_t w; // uint8_t
+	if (key & 2) {
+		x = ~((uint16_t)key + 68) + ~((uint16_t)key - 68);
 	}
 	else {
-		IDA_LOWORD(x) = key - 142;
+		x = ~((uint16_t)key ^ 0xFFFFFFBC) + (uint16_t)key - 67;
 	}
-	y = (uint8_t)(x ^ (ror2(WORD1(key) + 11, -11) + 73));
-	if (((uint8_t)x ^ (uint8_t)(ror2(WORD1(key) + 11, -11) + 73)) & 4) {
-		y = ~(~y - 3);
-	}
-	else {
-		IDA_LOWORD(y) = y + 2;
-	}
-	z = ((uint16_t)x ^ (ror2(WORD1(key) + 11, -11) + 29513)) >> 8;
-	if (z & 4) {
-		w = ~(~(uint8_t)z + 51);
+	y = (uint16_t)x ^ ((uint16_t)~((~WORD1(key) - 76) ^ 0x4C) + 5244);
+	if (((uint8_t)x ^ (uint8_t)(~((~BYTE2(key) - 76) ^ 0x4C) + 124)) & 2) {
+		z = y + 100;
+		w = ~((uint8_t)y - 100);
 	}
 	else {
-		IDA_LOWORD(w) = z - 34;
+		z = y ^ 0x9C;
+		IDA_LOBYTE(w) = y - 99;
 	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)y ^ ((uint8_t)w + 46)) % 128));
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(~z + w) ^ ((uint8_t)~((~BYTE1(y) + 92) ^ 0xA4) + 8)) % 128));
 	if (!make_decrypt_func(tsl, func)) {
 		return 0;
 	}
-	uint64_t ret = tsl->func(rol8(xmm.high, key & 7) - key);
+	uint64_t ret = tsl->func(rol8(xmm.high ^ key, key & 7) - key);
 	memset(tsl->func, 0, 0x400);
-	return ror8(ret, 37);
+	return ror8(ret, -116);
 }
 
 uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
@@ -170,24 +165,14 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint32_t x;
-	uint32_t y;
-	uint16_t z;
-	x = key >> 16;
-	if (key & 0x20000) {
-		y = ~(x + 36) + ~(x - 36);
-	}
-	else {
-		y = ~(x ^ 0x24) + x + 37;
-	}
-	z = (uint16_t)(key - 116) ^ ((uint16_t)y + 64692);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((key - 116) ^ (y - 76)) - 20) ^ ((uint8_t)(BYTE1(z) + 84) + 152)) % 128));
+	uint16_t x = (uint16_t)(key + 119) ^ (ror2(WORD1(key) - 123, 123) + 40423);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((key + 119) ^ (ror2(WORD1(key) - 123, 123) - 25)) - 81) ^ (ror1(BYTE1(x), 97) + 114)) % 128));
 	if (!make_decrypt_func(tsl, func)) {
 		return 0;
 	}
-	uint64_t ret = tsl->func(~(~xmm.high + key));
+	uint64_t ret = tsl->func(ror8(xmm.high, key & 7) - key);
 	memset(tsl->func, 0, 0x400);
-	return ror8(ret, -28);
+	return ror8(ret, 75);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -196,18 +181,15 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint64_t x;
-	if (key & 2) {
-		x = xmm.high - key;
-	}
-	else {
-		x = key + xmm.high;
-	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * ((((uint8_t)~((~((uint16_t)((WORD1(key) - 25 + 28669) ^ ror2(key, 45)) >> 8) + 101) ^ 0x9B) + 198) ^ ror1((BYTE2(key) - 28) ^ ror2(key, 45), 21)) % 128));
+	uint16_t x;
+	uint16_t y;
+	x = rol2(key, 48);
+	y = x ^ (ror2(WORD1(key) - 112, 112) + 4144);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * ((rol1(x ^ (ror2(WORD1(key) - 112, 112) + 48), -80) ^ (ror1(BYTE1(y) - 80, 80) + 160)) % 128));
 	if (!make_decrypt_func(tsl, func)) {
 		return 0;
 	}
-	uint64_t ret = tsl->func(x);
+	uint64_t ret = tsl->func(xmm.high - key);
 	memset(tsl->func, 0, 0x400);
-	return ror8(ret, 9);
+	return ror8(ret, 112);
 }
