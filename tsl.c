@@ -135,7 +135,7 @@ static uint64_t call_decrypt_func(struct tsl *tsl, uint64_t func, uint64_t arg) 
 	uint32_t before_call = rel_addr.offset - 5;
 	if (!READ(func, tsl->func, before_call) ||
 		!READ(abs_addr, (char *)tsl->func + before_call, len) ||
-		!READ(func + rel_addr.offset, (char *)tsl->func + (before_call + len), 0xf0)) {
+		!READ(func + rel_addr.offset, (char *)tsl->func + (before_call + len), 0xf0 - rel_addr.offset)) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(arg);
