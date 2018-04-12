@@ -1,7 +1,7 @@
 #pragma once
 
 /*
-3.7.27.28
+3.7.28.9
 */
 
 /*
@@ -29,5 +29,6 @@ struct tsl {
 int tsl_init(struct tsl *tsl);
 void tsl_finit(struct tsl *tsl);
 uint64_t tsl_decrypt_world(struct tsl *tsl, uint64_t world);
+uint64_t tsl_decrypt_gnames(struct tsl *tsl, uint64_t gnames);
 uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor);
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop);
