@@ -1,6 +1,6 @@
 # pubg_decryptor
 
-3.7.28.9
+3.7.28.11
 
 ```c
 struct tsl tsl;
@@ -22,7 +22,6 @@ uint64_t actor = tsl_decrypt_actor(&tsl, level + 0xa0);
 uint64_t actor_list = READ64(actor);
 uint32_t actor_count = READ32(actor + 0x8);
 
-// not sure
 uint64_t local_player_actor = tsl_decrypt_prop(&tsl, player_controller + 0x470);
 
 uint64_t gnames = READ64(g_base_addr + 0x416c888);
