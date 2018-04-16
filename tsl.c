@@ -89,7 +89,7 @@ struct rel_addr {
 	uint32_t addr;
 };
 
-static int find_call(struct tsl *tsl, uint8_t *buf, uint32_t size, struct rel_addr *ret) {
+static int find_call(struct tsl *tsl, const uint8_t *buf, uint32_t size, struct rel_addr *ret) {
 	uint32_t offset = 0;
 	while (offset < (size - 5)) {
 		if (buf[offset] == 0xe8) {
@@ -105,7 +105,7 @@ static int find_call(struct tsl *tsl, uint8_t *buf, uint32_t size, struct rel_ad
 	return 0;
 }
 
-static uint32_t get_func_len(struct tsl *tsl, uint8_t *buf, uint32_t size, uint8_t start, uint32_t end) {
+static uint32_t get_func_len(struct tsl *tsl, const uint8_t *buf, uint32_t size, uint8_t start, uint32_t end) {
 	if (*buf == start) {
 		uint32_t offset = 0;
 		while (offset < (size - sizeof(end))) {
