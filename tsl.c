@@ -90,13 +90,13 @@ struct rel_addr {
 };
 
 static int get_func_rel_addr(struct tsl *tsl, uint64_t func, struct rel_addr *ret) {
-	uint8_t buf[0xf0];
+	uint8_t buf[0x100];
 	if (READ(func, buf, sizeof(buf))) {
 		uint32_t offset = 0;
 		for (; offset < sizeof(buf) - 5; offset++) {
 			if (buf[offset] == 0xe8) {
 				uint32_t addr = *(uint32_t *)(buf + (offset + 1));
-				if (addr < 0x7fff) {
+				if (addr < 0x8000) {
 					ret->offset = offset + 5;
 					ret->addr = addr;
 					return 1;
@@ -135,7 +135,7 @@ static uint64_t call_decrypt_func(struct tsl *tsl, uint64_t func, uint64_t arg) 
 	uint32_t before_call = rel_addr.offset - 5;
 	if (!READ(func, tsl->func, before_call) ||
 		!READ(abs_addr, (char *)tsl->func + before_call, len) ||
-		!READ(func + rel_addr.offset, (char *)tsl->func + (before_call + len), 0xf0 - rel_addr.offset)) {
+		!READ(func + rel_addr.offset, (char *)tsl->func + (before_call + len), 0x100 - rel_addr.offset)) {
 		return 0;
 	}
 	uint64_t ret = tsl->func(arg);
