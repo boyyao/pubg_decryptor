@@ -89,7 +89,7 @@ struct rel_addr {
 	uint32_t addr;
 };
 
-static int find_call(struct tsl *tsl, const uint8_t *buf, uint32_t size, struct rel_addr *ret) {
+static int find_call(const uint8_t *buf, uint32_t size, struct rel_addr *ret) {
 	uint32_t offset = 0;
 	while (offset < (size - 5)) {
 		if (buf[offset] == 0xe8) {
@@ -105,7 +105,7 @@ static int find_call(struct tsl *tsl, const uint8_t *buf, uint32_t size, struct 
 	return 0;
 }
 
-static uint32_t get_func_len(struct tsl *tsl, const uint8_t *buf, uint32_t size, uint8_t start, uint32_t end) {
+static uint32_t get_func_len(const uint8_t *buf, uint32_t size, uint8_t start, uint32_t end) {
 	if (*buf == start) {
 		uint32_t offset = 0;
 		while (offset < (size - sizeof(end))) {
@@ -124,7 +124,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 		return 0;
 	}
 	struct rel_addr rel_addr;
-	if (!find_call(tsl, buf_0x100, 0x100, &rel_addr)) {
+	if (!find_call(buf_0x100, 0x100, &rel_addr)) {
 		return 0;
 	}
 	uint64_t abs_addr = func + (rel_addr.offset + rel_addr.addr);
@@ -132,7 +132,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 	if (!READ(abs_addr, buf_0x20, 0x20)) {
 		return 0;
 	}
-	uint32_t len = get_func_len(tsl, buf_0x20, 0x20, 0x48, 0xccccccc3);
+	uint32_t len = get_func_len(buf_0x20, 0x20, 0x48, 0xccccccc3);
 	if (!len || len > 0xf) {
 		return 0;
 	}
