@@ -1,7 +1,7 @@
 #include "tsl.h"
 
 int tsl_init(struct tsl *tsl) {
-	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x400, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+	tsl->func = (decrypt_func)VirtualAlloc(NULL, 0x200, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
 	return tsl->func == NULL ? 0 : 1;
 }
 
@@ -141,7 +141,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 	memcpy((char *)tsl->func + temp, buf_0x20, len);
 	memcpy((char *)tsl->func + (temp + len), buf_0x100 + rel_addr.offset, 0x100 - rel_addr.offset);
 	uint64_t ret = tsl->func(arg);
-	memset(tsl->func, 0, 0x400);
+	memset(tsl->func, 0, 0x200);
 	return ret;
 }
 
