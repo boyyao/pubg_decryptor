@@ -89,55 +89,57 @@ struct rel_addr {
 	uint32_t addr;
 };
 
-static int get_func_rel_addr(struct tsl *tsl, uint64_t func, struct rel_addr *ret) {
-	uint8_t buf[0x100];
-	if (READ(func, buf, sizeof(buf))) {
+static int find_call(struct tsl *tsl, uint8_t *buf, uint32_t size, struct rel_addr *ret) {
+	uint32_t offset = 0;
+	while (offset < (size - 5)) {
+		if (buf[offset] == 0xe8) {
+			uint32_t addr = *(uint32_t *)(buf + (offset + 1));
+			if (addr < 0x8000) {
+				ret->offset = offset + 5;
+				ret->addr = addr;
+				return 1;
+			}
+		}
+		offset++;
+	}
+	return 0;
+}
+
+static uint32_t get_func_len(struct tsl *tsl, uint8_t *buf, uint32_t size, uint8_t start, uint32_t end) {
+	if (*buf == start) {
 		uint32_t offset = 0;
-		for (; offset < sizeof(buf) - 5; offset++) {
-			if (buf[offset] == 0xe8) {
-				uint32_t addr = *(uint32_t *)(buf + (offset + 1));
-				if (addr < 0x8000) {
-					ret->offset = offset + 5;
-					ret->addr = addr;
-					return 1;
-				}
+		while (offset < (size - sizeof(end))) {
+			if (*(uint32_t *)(buf + offset) == end) {
+				return offset;
 			}
+			offset++;
 		}
 	}
 	return 0;
 }
 
-static uint32_t get_func_len(struct tsl *tsl, uint64_t func, uint8_t start, uint32_t end) {
-	uint8_t buf[0x20];
-	if (READ(func, buf, sizeof(buf))) {
-		if (buf[0] == start) {
-			uint32_t len = 0;
-			for (; len < (sizeof(buf) - sizeof(end)); len++) {
-				if (*(uint32_t *)(buf + len) == end) {
-					return len;
-				}
-			}
-		}
+static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
+	uint8_t buf_0x100[0x100];
+	if (!READ(func, buf_0x100, 0x100)) {
+		return 0;
 	}
-	return 0;
-}
-
-static uint64_t call_decrypt_func(struct tsl *tsl, uint64_t func, uint64_t arg) {
 	struct rel_addr rel_addr;
-	if (!get_func_rel_addr(tsl, func, &rel_addr)) {
+	if (!find_call(tsl, buf_0x100, 0x100, &rel_addr)) {
 		return 0;
 	}
 	uint64_t abs_addr = func + (rel_addr.offset + rel_addr.addr);
-	uint32_t len = get_func_len(tsl, abs_addr, 0x48, 0xccccccc3);
+	uint8_t buf_0x20[0x20];
+	if (!READ(abs_addr, buf_0x20, 0x20)) {
+		return 0;
+	}
+	uint32_t len = get_func_len(tsl, buf_0x20, 0x20, 0x48, 0xccccccc3);
 	if (!len || len > 0xf) {
 		return 0;
 	}
-	uint32_t before_call = rel_addr.offset - 5;
-	if (!READ(func, tsl->func, before_call) ||
-		!READ(abs_addr, (char *)tsl->func + before_call, len) ||
-		!READ(func + rel_addr.offset, (char *)tsl->func + (before_call + len), 0x100 - rel_addr.offset)) {
-		return 0;
-	}
+	uint32_t temp = rel_addr.offset - 5;
+	memcpy(tsl->func, buf_0x100, temp);
+	memcpy((char *)tsl->func + temp, buf_0x20, len);
+	memcpy((char *)tsl->func + (temp + len), buf_0x100 + rel_addr.offset, 0x100 - rel_addr.offset);
 	uint64_t ret = tsl->func(arg);
 	memset(tsl->func, 0, 0x400);
 	return ret;
@@ -190,7 +192,7 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		e = q + ~(q ^ 0x7C) + 125;
 	}
 	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)e ^ (BYTE1(w) + 72)) % 128));
-	return ror8(call_decrypt_func(tsl, func, rol8(xmm.high ^ key, 8 * (IDA_LOWORD(key) & 7u)) - key), -20);
+	return ror8(decrypt(tsl, func, rol8(xmm.high ^ key, 8 * (IDA_LOWORD(key) & 7u)) - key), -20);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -201,5 +203,5 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 	uint32_t key = (uint32_t)xmm.low;
 	uint16_t x = (uint16_t)(IDA_LOWORD(key) - 85) ^ (rol2(IDA_HIWORD(key), 8) + 10149);
 	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((IDA_LOWORD(key) - 85) ^ (rol2(IDA_HIWORD(key), 8) - 91)) - 125) ^ ((uint8_t)(BYTE1(x) - 77) + 118)) % 128));
-	return ror8(call_decrypt_func(tsl, func, ~(~xmm.high ^ key)), 17);
+	return ror8(decrypt(tsl, func, ~(~xmm.high ^ key)), 17);
 }
