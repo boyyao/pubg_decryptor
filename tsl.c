@@ -147,7 +147,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 
 // exports
 
-#define TABLE 0x3e47120
+#define TABLE 0x3e31120
 
 struct uint128_t {
 	uint64_t low;
@@ -168,9 +168,26 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x = ((uint16_t)~((~IDA_HIWORD(key) - 15) ^ 0xF) + 43467) ^ ror2(IDA_LOWORD(key) - 27, 8);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((~((~(uint8_t)IDA_HIWORD(key) - 15) ^ 0xF) - 53) ^ ror2(IDA_LOWORD(key) - 27, 8)) - 115) ^ ((uint8_t)(BYTE1(x) - 93) + 170)) % 128));
-	return ror8(decrypt(tsl, func, key ^ rol8(xmm.high - key, 8 * (IDA_LOWORD(key) & 7u))), -97);
+	uint16_t x;
+	uint16_t y;
+	uint8_t z;
+	uint64_t w;
+	x = key >> 16;
+	if (IDA_HIWORD(key) & 1) {
+		y = rol2(x, 8);
+	}
+	else {
+		y = ror2(x, 8);
+	}
+	z = (uint8_t)((y - 83) ^ ror2(IDA_LOWORD(key), 8)) ^ ((uint8_t)(((uint16_t)((y - 83) ^ ror2(IDA_LOWORD(key), 8)) >> 8) ^ 0x6B) + 102);
+	if (IDA_LOWORD(key) & 2) {
+		w = xmm.high - key;
+	}
+	else {
+		w = xmm.high + key;
+	}
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (z % 128));
+	return ror8(decrypt(tsl, func, w), -7);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -179,7 +196,7 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x = (uint16_t)(key + 44) ^ ((uint16_t)~((~IDA_HIWORD(key) - 4) ^ 4) + 7188);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((key + 44) ^ (~((~BYTE2(key) - 4) ^ 4) + 20)) - 116) ^ ((uint8_t)~((~BYTE1(x) - 76) ^ 0x4C) + 216)) % 128));
-	return ror8(decrypt(tsl, func, ~(key + ~xmm.high)), -60);
+	uint16_t x = (uint16_t)(key - 106) ^ ((uint16_t)~((~IDA_HIWORD(key) + 2) ^ 0xFFFE) + 29430);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((key - 106) ^ (~((~BYTE2(key) + 2) ^ 0xFE) - 10)) + 70) ^ ((uint8_t)(BYTE1(x) + 90) + 148)) % 128));
+	return ror8(decrypt(tsl, func, ror8(xmm.high, 8 * (key & 7)) + key), 30);
 }
