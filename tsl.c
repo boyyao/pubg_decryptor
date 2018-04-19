@@ -147,7 +147,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 
 // exports
 
-#define TABLE 0x3e53120
+#define TABLE 0x3e4f120
 
 struct uint128_t {
 	uint64_t low;
@@ -168,21 +168,18 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x;
-	uint16_t y;
-	uint16_t z;
-	uint16_t w;
-	x = key >> 16;
-	y = IDA_LOWORD(key) - 69;
-	if (IDA_HIWORD(key) & 1) {
-		z = rol2(x, 8);
+	uint32_t x;
+	uint32_t y;
+	x = (uint16_t)(IDA_LOWORD(key) + 55) ^ ((uint16_t)(IDA_HIWORD(key) + 59) + 56743);
+	y = (uint8_t)((uint16_t)((IDA_LOWORD(key) + 55) ^ (IDA_HIWORD(key) - 8734)) >> 8);
+	if (((uint16_t)((IDA_LOWORD(key) + 55) ^ (IDA_HIWORD(key) - 8734)) >> 8) & 4) {
+		y = ~(~y + 285);
 	}
 	else {
-		z = ror2(x, 8);
+		IDA_LOBYTE(y) = y + 66;
 	}
-	w = y ^ (z + 30613);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * ((((uint8_t)(BYTE1(w) ^ 0x43) + 150) ^ (uint8_t)((y ^ (z - 107)) + 19)) % 128));
-	return ror8(decrypt(tsl, func, ~(~xmm.high ^ key)), 65);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(x + 111) ^ ((uint8_t)y + 242)) % 128));
+	return ror8(decrypt(tsl, func, ror8(xmm.high, 8 * (IDA_LOWORD(key) & 7u)) - key), 11);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -191,17 +188,6 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x;
-	uint8_t y;
-	uint64_t z;
-	x = (uint16_t)(IDA_LOWORD(key) - 2) ^ ((uint16_t)(IDA_HIWORD(key) - 58) + 60126);
-	y = (uint8_t)(((IDA_LOWORD(key) - 2) ^ (IDA_HIWORD(key) - 92)) - 18) ^ ((uint8_t)(BYTE1(x) - 50) + 196);
-	if (IDA_LOWORD(key) & 2) {
-		z = xmm.high ^ key;
-	}
-	else {
-		z = xmm.high + key;
-	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (y % 128));
-	return ror8(decrypt(tsl, func, z), 102);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(IDA_LOWORD(key) ^ (IDA_HIWORD(key) - 16)) ^ (((uint16_t)(IDA_LOWORD(key) ^ (IDA_HIWORD(key) + 20720)) >> 8) + 32)) % 128));
+	return ror8(decrypt(tsl, func, xmm.high - key), 48);
 }
