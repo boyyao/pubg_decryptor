@@ -169,7 +169,7 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 	}
 	uint32_t key = (uint32_t)xmm.low;
 	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(IDA_LOWORD(key) ^ (IDA_HIWORD(key) - 64)) ^ ((uint8_t)(((uint16_t)(IDA_LOWORD(key) ^ (IDA_HIWORD(key) - 28480)) >> 8) + 48) + 160)) % 128));
-	ror8(decrypt(tsl, func, xmm.high - key), -16);
+	return ror8(decrypt(tsl, func, xmm.high - key), -16);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
