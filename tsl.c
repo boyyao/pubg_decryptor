@@ -147,7 +147,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 
 // exports
 
-#define TABLE 0x3e80120
+#define TABLE 0x3e51120
 
 struct uint128_t {
 	uint64_t low;
@@ -168,9 +168,18 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x = (uint16_t)(IDA_LOWORD(key) - 10) ^ ((key >> 16) + 37462);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((IDA_LOWORD(key) - 10) ^ (IDA_HIWORD(key) + 86)) - 90) ^ ((uint8_t)(BYTE1(x) + 6) + 212)) % 128));
-	return ror8(decrypt(tsl, func, ror8(xmm.high, 8 * (IDA_LOWORD(key) & 7u)) + key), -2);
+	uint32_t x;
+	uint16_t y;
+	x = key >> 16;
+	if (IDA_HIWORD(key) & 4) {
+		x = ~(~x + 45);
+	}
+	else {
+		IDA_LOWORD(x) = x - 30;
+	}
+	y = ((uint16_t)x + 22325) ^ (uint16_t)(IDA_LOWORD(key) + 27);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((x + 53) ^ (IDA_LOWORD(key) + 27)) + 115) ^ (BYTE1(y) + 86)) % 128));
+	return ror8(decrypt(tsl, func, ~(~xmm.high ^ key)), 97);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -179,20 +188,17 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint32_t x;
-	uint64_t y;
-	if (IDA_LOWORD(key) & 1) {
-		x = rol2(IDA_LOWORD(key), 8);
-	}
-	else {
-		x = ror2(IDA_LOWORD(key), 8);
-	}
+	uint16_t x;
+	uint8_t y;
+	uint64_t z;
+	x = (uint16_t)(IDA_LOWORD(key) - 98) ^ ((uint16_t)~(~IDA_HIWORD(key) + 26) + 51838);
+	y = (uint8_t)(((IDA_LOWORD(key) - 98) ^ (~(~(uint8_t)IDA_HIWORD(key) + 26) + 126)) - 114) ^ ((BYTE1(x) ^ 0x92) + 132);
 	if (IDA_LOWORD(key) & 2) {
-		y = xmm.high - key;
+		z = xmm.high ^ key;
 	}
 	else {
-		y = xmm.high + key;
+		z = xmm.high + key;
 	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(x ^ (rol2(IDA_HIWORD(key), 8) - 97)) ^ ((uint8_t)~((~((uint16_t)(x ^ (rol2(IDA_HIWORD(key), 8) + 1439)) >> 8) + 23) ^ 0xE9) + 2)) % 128));
-	return ror8(decrypt(tsl, func, ~y), 35);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (y % 128));
+	return ror8(decrypt(tsl, func, z), -122);
 }
