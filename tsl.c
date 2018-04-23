@@ -147,7 +147,7 @@ static uint64_t decrypt(struct tsl *tsl, uint64_t func, uint64_t arg) {
 
 // exports
 
-#define TABLE 0x3e69120
+#define TABLE 0x3e5e120
 
 struct uint128_t {
 	uint64_t low;
@@ -170,16 +170,32 @@ uint64_t tsl_decrypt_actor(struct tsl *tsl, uint64_t actor) {
 	uint32_t key = (uint32_t)xmm.low;
 	uint32_t x;
 	uint32_t y;
-	x = ((key >> 16) + 20042) ^ (uint16_t)~((~IDA_LOWORD(key) + 86) ^ 0xFFAA);
-	y = (uint8_t)((uint16_t)((IDA_HIWORD(key) + 20042) ^ ~((~IDA_LOWORD(key) + 86) ^ 0xFFAA)) >> 8);
-	if (((uint16_t)((IDA_HIWORD(key) + 20042) ^ ~((~IDA_LOWORD(key) + 86) ^ 0xFFAA)) >> 8) & 4) {
-		y = ~(~y - 306);
+	uint32_t z;
+	uint32_t w;
+	uint32_t q;
+	uint32_t e;
+	uint8_t r;
+	if (IDA_LOWORD(key) & 2) {
+		x = ~(IDA_LOWORD(key) - 108);
+		y = IDA_LOWORD(key) + 108;
 	}
 	else {
-		IDA_LOBYTE(y) = y - 52;
+		x = IDA_LOWORD(key) + 109;
+		y = IDA_LOWORD(key) ^ 0x6C;
 	}
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * ((((uint8_t)y + 236) ^ (uint8_t)~((~(uint8_t)x + 6) ^ 0xFA)) % 128));
-	return ror8(decrypt(tsl, func, key + rol8(key + xmm.high, 8 * (IDA_LOWORD(key) & 7u))), 34);
+	z = ~y + x;
+	w = (uint16_t)z ^ ((uint16_t)(IDA_HIWORD(key) - 60) + 42028);
+	q = (uint8_t)(z ^ (IDA_HIWORD(key) - 60 + 44));
+	if (q & 2) {
+		e = ~(q - 52);
+		r = q + 52;
+	}
+	else {
+		IDA_LOBYTE(e) = q - 51;
+		r = q ^ 0xCC;
+	}
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(~r + e) ^ (BYTE1(w) + 168)) % 128));
+	return ror8(decrypt(tsl, func, rol8(xmm.high ^ key, 8 * (IDA_LOWORD(key) & 7u)) - key), 124);
 }
 
 uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
@@ -188,7 +204,7 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		return 0;
 	}
 	uint32_t key = (uint32_t)xmm.low;
-	uint16_t x = (rol2(IDA_HIWORD(key), 8) + 49555) ^ ror2(IDA_LOWORD(key) - 99, 8);
-	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((rol2(IDA_HIWORD(key), 8) - 109) ^ ror2(IDA_LOWORD(key) - 99, 8)) + 5) ^ ((uint8_t)~((~BYTE1(x) - 85) ^ 0x55) + 26)) % 128));
-	return ror8(decrypt(tsl, func, ~(~xmm.high - key)), 71);
+	uint16_t x = (uint16_t)(IDA_LOWORD(key) - 37) ^ (ror2(IDA_HIWORD(key), 8) + 6005);
+	uint64_t func = READ64(GET_ADDR(TABLE) + 0x8 * (((uint8_t)(((IDA_LOWORD(key) - 37) ^ (ror2(IDA_HIWORD(key), 8) + 117)) + 51) ^ ((uint8_t)(BYTE1(x) - 99) + 214)) % 128));
+	return ror8(decrypt(tsl, func, ~(~xmm.high ^ key)), -95);
 }
