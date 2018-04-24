@@ -209,13 +209,11 @@ uint64_t tsl_decrypt_prop(struct tsl *tsl, uint64_t prop) {
 		r = (key >> 16) - 19;
 	}
 	t = (uint16_t)z ^ ((uint16_t)(~e + r) + 29852);
-	if (t & 2)
-	{
+	if (t & 2) {
 		u = ~((uint8_t)t - 68);
 		i = t + 68;
 	}
-	else
-	{
+	else {
 		IDA_LOBYTE(u) = t - 67;
 		i = t ^ 0xBC;
 	}
