@@ -6,7 +6,7 @@
 struct tsl tsl;
  
 if (!tsl_init(&tsl)) {
-  // what?
+
 }
  
 uint64_t world = READ64(READ64(g_base_addr + 0x4188a80));
